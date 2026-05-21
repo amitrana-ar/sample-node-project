@@ -1,19 +1,24 @@
-FROM node:24-alpine
-
-# Create app user and group
-RUN addgroup app && adduser -S -G app app
+# Stage 1: Build
+FROM node:24 AS builder
 
 WORKDIR /usr/src/app
 
-# Copy package files and install dependencies as root
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Copy rest of the app
+# Stage 2: Runtime
+FROM node:24-alpine
+
+RUN addgroup -S app && adduser -S app -G app
+
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app /usr/src/app
+
 COPY . .
 
-# Switch to non-root user for runtime
 USER app
 
 EXPOSE 3000
+
 CMD ["node", "app.js"]
