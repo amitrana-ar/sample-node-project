@@ -1,8 +1,7 @@
-  services:
-    app:
-      container_name: app
-      build:
-        context: .
-        dockerfile: Dockerfile
-      ports:
-        - "3000:3000"
+services:
+  app:
+    container_name: app
+    image: artech0203/node-project:${IMAGE_TAG}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
