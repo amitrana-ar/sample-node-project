@@ -1,3 +1,5 @@
+@Library('shared-lib') _
+
 pipeline {
     agent any
 
@@ -10,69 +12,54 @@ pipeline {
         stage('Generate Image Tag') {
             steps {
                 script {
-                    env.IMAGE_TAG = sh(
-                        script: 'git rev-parse --short HEAD',
-                        returnStdout: true
-                    ).trim()
-
-                    echo "Generated Image Tag: ${env.IMAGE_TAG}"
+                    generateImageTag()
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                docker build \
-                -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                '''
+                script {
+                    buildDockerImage(
+                        IMAGE_NAME
+                    )
+                }
             }
         }
 
         stage('DockerHub Login') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    sh '''
-                    echo "$DOCKER_PASS" | docker login \
-                    -u "$DOCKER_USER" \
-                    --password-stdin
-                    '''
+                script {
+                    dockerHubLogin()
                 }
             }
         }
 
         stage('Push Image to DockerHub') {
             steps {
-                sh '''
-                docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
+                script {
+                    pushDockerImage(
+                        IMAGE_NAME
+                    )
+                }
             }
         }
 
         stage('Deploy Container') {
             steps {
-                sh '''
-                export IMAGE_TAG=${IMAGE_TAG}
-
-                docker compose down || true
-                docker compose up -d
-                '''
+                script {
+                    deployContainer()
+                }
             }
         }
 
         stage('Validate Deployment') {
             steps {
-                sh '''
-                sleep 5
-                docker ps
-                curl -I http://192.168.1.45:3000
-                '''
+                script {
+                    validateDeployment(
+                        "http://192.168.1.45:3000"
+                    )
+                }
             }
         }
     }
@@ -83,7 +70,7 @@ pipeline {
         }
 
         failure {
-            echo 'Pipeline failed. Check logs for troubleshooting.'
+            echo 'Pipeline failed.'
         }
     }
 }
