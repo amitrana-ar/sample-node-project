@@ -38,7 +38,7 @@ pipeline {
         stage('Push Image to DockerHub') {
             steps {
                 script {
-                    pushDockerImage(
+                    pushImage(
                         IMAGE_NAME
                     )
                 }
