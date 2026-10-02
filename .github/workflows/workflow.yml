@@ -10,7 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: Use Node.js 24
         uses: actions/setup-node@v3
         with:
@@ -18,5 +17,5 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Run tests
-        run: npm test
+        run: npx jest --ci --runInBand
         
